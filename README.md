@@ -1,11 +1,13 @@
+--[[ 
+    NINJA USER - VERSÃO DELTA (SIMPLIFICADA)
+    Só aparece para quem também estiver usando este script.
+]]
+
 local Players = game:GetService("Players")
 local LP = Players.LocalPlayer
 
--- Nome do atributo que identifica o Ninja
-local NINJA_ATTRIBUTE = "IsNinjaUser"
-
--- Função para criar a tag
-local function createTag(head)
+-- Função para criar a tag visual
+local function createVisualTag(head)
     if head:FindFirstChild("NinjaTagBillboard") then return end
 
     local billboardGui = Instance.new("BillboardGui")
@@ -28,50 +30,38 @@ local function createTag(head)
     textLabel.Parent = billboardGui
 end
 
--- Função para marcar o personagem como Ninja (para que outros te vejam)
-local function markAsNinja(character)
-    if character then
-        character:SetAttribute(NINJA_ATTRIBUTE, true)
-        -- Coloca a tag em si mesmo também para confirmação
-        local head = character:WaitForChild("Head", 10)
-        if head then createTag(head) end
-    end
-end
-
--- Função para verificar se alguém é Ninja e colocar a tag
-local function checkAndTag(character)
-    if not character then return end
-    
-    -- Verifica se o personagem tem o atributo de Ninja
-    if character:GetAttribute(NINJA_ATTRIBUTE) == true then
-        local head = character:WaitForChild("Head", 10)
-        if head then createTag(head) end
-    end
-
-    -- Fica vigiando se o atributo for adicionado depois (caso o outro script demore a carregar)
-    character:GetAttributeChangedSignal(NINJA_ATTRIBUTE):Connect(function()
-        if character:GetAttribute(NINJA_ATTRIBUTE) == true then
-            local head = character:WaitForChild("Head", 10)
-            if head then createTag(head) end
+-- 1. MARCAR VOCÊ COMO NINJA (Para que outros te vejam)
+-- Criamos um objeto invisível chamado "NinjaID" na sua cabeça
+local function markMe()
+    local char = LP.Character or LP.CharacterAdded:Wait()
+    local head = char:WaitForChild("Head", 10)
+    if head then
+        if not head:FindFirstChild("NinjaID") then
+            local id = Instance.new("StringValue")
+            id.Name = "NinjaID"
+            id.Parent = head
         end
-    end)
-end
-
--- Configura o Jogador Local (Você)
-LP.CharacterAdded:Connect(markAsNinja)
-if LP.Character then markAsNinja(LP.Character) end
-
--- Configura a detecção para os outros jogadores
-local function setupPlayerDetection(player)
-    player.CharacterAdded:Connect(checkAndTag)
-    if player.Character then checkAndTag(player.Character) end
-end
-
-Players.PlayerAdded:Connect(setupPlayerDetection)
-for _, player in ipairs(Players:GetPlayers()) do
-    if player ~= LP then
-        setupPlayerDetection(player)
+        createVisualTag(head) -- Você também vê a sua tag
     end
 end
 
-print("Sistema de Detecção Ninja Seletiva Ativado.")
+task.spawn(markMe)
+LP.CharacterAdded:Connect(markMe)
+
+-- 2. LOOP DE DETECÇÃO (Para você ver os outros Ninjas)
+-- O script fica olhando se os outros jogadores têm o "NinjaID" na cabeça
+task.spawn(function()
+    while task.wait(2) do -- Verifica a cada 2 segundos para não dar lag
+        for _, player in ipairs(Players:GetPlayers()) do
+            if player ~= LP and player.Character then
+                local head = player.Character:FindFirstChild("Head")
+                if head and head:FindFirstChild("NinjaID") then
+                    -- Se ele tem o NinjaID, significa que ele também rodou o script!
+                    createVisualTag(head)
+                end
+            end
+        end
+    end
+end)
+
+print("Ninja User Delta Ativado!")
