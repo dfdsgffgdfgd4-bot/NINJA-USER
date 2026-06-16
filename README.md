@@ -1,9 +1,3 @@
---[[ 
-    SCRIPT NINJA USER - DETECÇÃO SELETIVA
-    Este script só mostra a tag em quem também estiver usando o script.
-    Ele usa um 'Atributo' no personagem para se identificarem.
-]]
-
 local Players = game:GetService("Players")
 local LP = Players.LocalPlayer
 
